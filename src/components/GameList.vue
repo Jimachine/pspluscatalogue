@@ -22,17 +22,36 @@ onMounted(async () => {
   games.value = allGames;
 });
 
+function normalise(text) {
+  return text
+    .toLowerCase()
+    .normalize("NFD") // separates accents
+    .replace(/[\u0300-\u036f]/g, "") // removes accents
+    .replace(/[’'".,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // removes punctuation
+    .trim();
+}
+
 // Filtering logic
 const filteredGames = computed(() => {
-  return games.value.filter((game) => {
-    const matchesSearch = game.name
-      .toLowerCase()
-      .includes(search.value.toLowerCase());
-    const matchesPlatform = platformFilter.value
-      ? game.platform === platformFilter.value
-      : true;
-    return matchesSearch && matchesPlatform;
-  });
+  const searchWords = normalise(search.value).split(/\s+/);
+
+  const seen = new Set();
+
+  return games.value
+    .filter((game) => {
+      const name = normalise(game.name);
+      const matchesSearch = searchWords.every((word) => name.includes(word));
+
+      const matchesPlatform = platformFilter.value
+        ? game.device.includes(platformFilter.value)
+        : true;
+
+      const isUnique = !seen.has(game.conceptId);
+      if (isUnique) seen.add(game.conceptId);
+
+      return matchesSearch && matchesPlatform && isUnique;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 });
 </script>
 
@@ -40,16 +59,24 @@ const filteredGames = computed(() => {
   <div class="app">
     <h1>PlayStation Plus Catalogue</h1>
 
-    <!-- <input v-model="search" placeholder="Search games..." />
+    <div class="filters">
+    <!-- Search input -->
+    <input v-model="search" class="search-input" placeholder="Search games..." />
 
-    <select v-model="platformFilter">
+    <!-- Platform filter -->
+    <select id="platform-select" class="platform-select" v-model="platformFilter">
       <option value="">All Platforms</option>
       <option value="PS5">PS5</option>
       <option value="PS4">PS4</option>
-    </select> -->
+    </select>
+</div>
 
     <div class="games">
-      <div v-for="game in games" :key="game.conceptId" class="game-card">
+      <div
+        v-for="game in filteredGames"
+        :key="game.conceptId"
+        class="game-card"
+      >
         <img :src="game.imageUrl" :alt="game.name" />
         <p class="game-title">{{ game.name }}</p>
         <ul class="device-list">
@@ -84,8 +111,8 @@ img {
 }
 
 .game-title {
-  min-height: 75px;       /* increase height for 2–3 lines */
-  overflow: hidden;        /* prevents super-long text from pushing layout */
+  min-height: 75px; /* increase height for 2–3 lines */
+  overflow: hidden; /* prevents super-long text from pushing layout */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -95,12 +122,11 @@ img {
   line-height: 1.2;
 }
 
-
 .device-list {
   display: flex;
-  justify-content: center;   /* center the whole row */
+  justify-content: center; /* center the whole row */
   align-items: center;
-  gap: 10px;                 /* spacing between icons */
+  gap: 10px; /* spacing between icons */
   margin: 10px 0 0;
   padding: 0;
   list-style: none;
@@ -116,10 +142,39 @@ img {
 }
 
 .device-icon {
-  width: 36px;   /* much bigger */
+  width: 36px; /* much bigger */
   height: 36px;
   filter: brightness(0) invert(1);
   display: block;
 }
 
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  justify-content: center;
+}
+
+.search-input,
+.platform-select {
+  padding: 10px 14px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: black;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  min-width: 200px;
+}
+
+.search-input:focus,
+.platform-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  outline: none;
+}
+
+.platform-select {
+  cursor: pointer;
+}
 </style>
