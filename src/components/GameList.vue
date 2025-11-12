@@ -11,12 +11,14 @@ const iconMap = {
 const games = ref([]);
 const search = ref("");
 const platformFilter = ref("");
+const baseUrl = import.meta.env.VITE_API_BASE || "/psapi";
 
 // Fetch data on mount
 onMounted(async () => {
   const res = await fetch(
-    "/psapi/bin/imagic/gameslist?locale=en-gb&categoryList=plus-games-list"
+    `${baseUrl}/bin/imagic/gameslist?locale=en-gb&categoryList=plus-games-list`
   );
+
   const data = await res.json();
   const allGames = data.flatMap((group) => group.games);
   games.value = allGames;
@@ -60,16 +62,24 @@ const filteredGames = computed(() => {
     <h1>PlayStation Plus Catalogue</h1>
 
     <div class="filters">
-    <!-- Search input -->
-    <input v-model="search" class="search-input" placeholder="Search games..." />
+      <!-- Search input -->
+      <input
+        v-model="search"
+        class="search-input"
+        placeholder="Search games..."
+      />
 
-    <!-- Platform filter -->
-    <select id="platform-select" class="platform-select" v-model="platformFilter">
-      <option value="">All Platforms</option>
-      <option value="PS5">PS5</option>
-      <option value="PS4">PS4</option>
-    </select>
-</div>
+      <!-- Platform filter -->
+      <select
+        id="platform-select"
+        class="platform-select"
+        v-model="platformFilter"
+      >
+        <option value="">All Platforms</option>
+        <option value="PS5">PS5</option>
+        <option value="PS4">PS4</option>
+      </select>
+    </div>
 
     <div class="games">
       <div
