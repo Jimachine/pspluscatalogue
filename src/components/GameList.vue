@@ -11,12 +11,12 @@ const iconMap = {
 const games = ref([]);
 const search = ref("");
 const platformFilter = ref("");
-const baseUrl = import.meta.env.VITE_API_BASE || "/psapi";
 
 // Fetch data on mount
+
 onMounted(async () => {
   const res = await fetch(
-    `${baseUrl}/bin/imagic/gameslist?locale=en-gb&categoryList=plus-games-list`
+    `/psapi/bin/imagic/gameslist?locale=en-gb&categoryList=plus-games-list`
   );
 
   const data = await res.json();
